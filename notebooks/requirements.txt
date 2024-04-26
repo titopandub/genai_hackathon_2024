@@ -1,0 +1,27 @@
+jupyter
+google-cloud-aiplatform
+pandas
+openpyxl
+annoy
+requests
+python-dotenv
+langchain-core
+langchain-google-vertexai
+tqdm
+kneed
+scikit-learn
+matplotlib
+seaborn
+beautifulsoup4
+markdownify
+# sentence-transformers
+openai
+sqlalchemy
+psycopg2
+ipython-sql
+md2pdf
+markdown
+aiohttp
+aiohttp_retry
+google-cloud-discoveryengine
+trino

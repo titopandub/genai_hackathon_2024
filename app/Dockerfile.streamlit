@@ -1,0 +1,24 @@
+# app/Dockerfile
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    git \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+ARG GUARDRAILS_TOKEN
+RUN guardrails configure --token ${GUARDRAILS_TOKEN}
+RUN guardrails hub install hub://guardrails/competitor_check
+
+COPY src src
+CMD ["ddtrace-run", "python", "-m", "streamlit", "run", "src/basic_chat.py", "--server.port=80", "--server.address=0.0.0.0"]

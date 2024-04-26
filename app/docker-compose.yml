@@ -1,0 +1,84 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    image: asia.gcr.io/tools-build/genai-api:latest
+    command: flask --app=src/app.py run --host=0.0.0.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
+      - ~/.config/gcloud/:/home/quiz/.config/gcloud/
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/quiz/.config/gcloud/application_default_credentials.json
+      - LARVA_URL=http://host.docker.internal:6000
+      - DB_HOST=host.docker.internal
+      - PYTHONPATH=.
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDIO_CHAT_HOST=http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+      - worker
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    command: celery --app src.worker.celery worker --concurrency=1
+    volumes:
+      - ./:/app
+      - ~/.config/gcloud/:/home/quiz/.config/gcloud/
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/quiz/.config/gcloud/application_default_credentials.json
+      - LARVA_URL=http://host.docker.internal:6000
+      - DB_HOST=host.docker.internal
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDIO_CHAT_HOST=http://host.docker.internal:8080
+      - GOOGLE_CLOUD_PROJECT=vidio-quiz-prod
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    command: celery --app src.celery.celery beat
+    volumes:
+      - ./:/app
+      - ~/.config/gcloud/:/home/quiz/.config/gcloud/
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/quiz/.config/gcloud/application_default_credentials.json
+      - LARVA_URL=http://host.docker.internal:6000
+      - DB_HOST=host.docker.internal
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDIO_CHAT_HOST=http://host.docker.internal:8080
+      - GOOGLE_CLOUD_PROJECT=vidio-quiz-prod
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+      - worker
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"

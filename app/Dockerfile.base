@@ -1,0 +1,17 @@
+# app/Dockerfile
+
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    git \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install guardrails-ai
+
+ARG GUARDRAILS_TOKEN
+RUN guardrails configure --token ${GUARDRAILS_TOKEN}
+RUN guardrails hub install hub://guardrails/competitor_check

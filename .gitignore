@@ -1,0 +1,16 @@
+notebooks/film_metadata*
+notebooks/search_ground_truth*
+notebooks/data
+notebooks/.ipynb_checkpoints
+.idea
+.env
+.venv
+application_default_credentials.json
+app/data/
+__pycache__/
+celerybeat-schedule
+service-account.json
+service-account.json.enc
+.env.ci.enc
+.structurizr
+workspace.json

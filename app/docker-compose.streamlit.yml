@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+      args:
+        GUARDRAILS_TOKEN: "${GUARDRAILS_TOKEN}"
+    image: asia.gcr.io/tools-build/streamlit-server-dev:latest
+    entrypoint: python -m streamlit run src/basic_chat.py --server.port=80 --server.address=0.0.0.0
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/app
+      - ~/.config/gcloud/:/home/root/.config/gloud/
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/root/.config/gloud/application_default_credentials.json
+      - LARVA_URL=http://host.docker.internal:6000
+      - DB_HOST=db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VIDIO_CHAT_HOST=http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:14
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: streamlit
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_HOST_AUTH_METHOD: 'trust'
+    volumes:
+      # declare your mount volume /host/dir:/container/dir
+      - ./data/pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
